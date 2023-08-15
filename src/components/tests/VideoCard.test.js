@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { formatAgo } from "../../util/date";
 import VideoCard from "../VideoCard";
 
@@ -22,19 +23,44 @@ describe("VideoCard", () => {
 
   it("renders video item", () => {
     render(
-      // react router를 사용하는 컴포넌트를 테스트할때에는 MemoryRouter를 사용해야함
       <MemoryRouter>
         <VideoCard video={video} />
       </MemoryRouter>
     );
 
     const image = screen.getByRole("img");
-    // 이미지 태그의 src는 thumbnails.medium.url과 같아야함
     expect(image.src).toBe(thumbnails.medium.url);
     expect(image.alt).toBe(title);
-    // 화면(도큐먼트)에 video에 title에 있는 텍스트가 있는지 확인한다.
     expect(screen.getByText(title)).toBeInTheDocument();
     expect(screen.getByText(channelTitle)).toBeInTheDocument();
     expect(screen.getByText(formatAgo(publishedAt))).toBeInTheDocument();
+  });
+
+  // 동적 test
+  it("navigates to detailed video page with video state when clicked", () => {
+    // 테스트용 함수 컴포넌트
+    // 리엑트 라우터로부터 전달받은 state를 보여주는 컴포넌트
+    //   /videos/watch/${video.id} 경로로 왓을때 받은 상태를 보여주기 위해 만듬
+    function LocationStateDisplay() {
+      return <pre>{JSON.stringify(useLocation().state)}</pre>;
+    }
+    render(
+      // initialEntries => 처음에 시작하는 경로
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<VideoCard video={video} />} />
+          <Route
+            path={`/videos/watch/${video.id}`}
+            element={<LocationStateDisplay />}
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+    // Role -> listitem은 li 태그임
+    const card = screen.getByRole("listitem");
+    // 비디오 카드를 클릭
+    userEvent.click(card);
+
+    expect(screen.getByText(JSON.stringify({ video }))).toBeInTheDocument();
   });
 });
