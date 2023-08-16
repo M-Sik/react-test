@@ -3,29 +3,15 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { formatAgo } from "../../util/date";
 import VideoCard from "../VideoCard";
+import { fakeVideo as video } from "../../tests/videos";
+import { withRouter } from "../../tests/utils";
 
 describe("VideoCard", () => {
-  const video = {
-    id: 1,
-    snippet: {
-      title: "title",
-      channelId: "1",
-      channelTitle: "channelTitle",
-      publishedAt: new Date(),
-      thumbnails: {
-        medium: {
-          url: "http://image/",
-        },
-      },
-    },
-  };
   const { title, channelTitle, publishedAt, thumbnails } = video.snippet;
 
   it("renders video item", () => {
     render(
-      <MemoryRouter>
-        <VideoCard video={video} />
-      </MemoryRouter>
+      withRouter(<Route path="/" element={<VideoCard video={video} />} />)
     );
 
     const image = screen.getByRole("img");
@@ -46,15 +32,15 @@ describe("VideoCard", () => {
     }
     render(
       // initialEntries => 처음에 시작하는 경로
-      <MemoryRouter initialEntries={["/"]}>
-        <Routes>
+      withRouter(
+        <>
           <Route path="/" element={<VideoCard video={video} />} />
           <Route
             path={`/videos/watch/${video.id}`}
             element={<LocationStateDisplay />}
           />
-        </Routes>
-      </MemoryRouter>
+        </>
+      )
     );
     // Role -> listitem은 li 태그임
     const card = screen.getByRole("listitem");
